@@ -15,8 +15,10 @@ import {
   View,
   ToastAndroid,
   PermissionsAndroid,
+  Keyboard,
 } from 'react-native';
 import axios from 'axios';
+import WeatherComponent from './WeatherComponent';
 import Geolocation from 'react-native-geolocation-service';
 const APIKEY = "41a352ce12d5ca52a662dde9b6b686e8";
 class App extends Component {
@@ -27,25 +29,115 @@ class App extends Component {
         latitude: 0,
         longitude: 0,
       },
+      inPutCity: '',
       city: 'NA',
       weather: 'NA',
       currentTemp: 'NA',
-      minTempOfTime: 'NA',
-      maxTempOfTime: 'NA',
+      minTemp: 'NA',
+      maxTemp: 'NA',
+      start : true,
   };
   this.getLocation = this.getLocation.bind(this);
   this.requestLocationPermission = this.requestLocationPermission.bind(this);
   this.getCity = this.getCity.bind(this);
+  this.getWeather = this.getWeather.bind(this);
+  this.captializeFirstLetter = this.captializeFirstLetter.bind(this);
+  this.handleSearch = this.handleSearch.bind(this);
+  this.getGCode = this.getGCode.bind(this);
 }
   componentDidMount() {
     this.getLocation()
   }
   componentDidUpdate(prevProps, prevState) {
-    if (prevState.location !== this.state.location) {
+    if (prevState.location !== this.state.location && this.state.start) {
       console.log('getCity');
+      
       this.getCity();
+      this.getWeather();
+    } else if (prevState.location !== this.state.location) {
+      console.log('getWeather');
+      this.getWeather()
     }
   }
+  /**
+   * 
+   * Get current location geocode
+   */
+  async getGCode () {
+    const url = `http://api.openweathermap.org/geo/1.0/direct?q=${this.state.inPutCity}&limit=${1}&appid=${APIKEY}`;
+    try {
+      await axios.get(url)
+      .then(response => {
+        if (response.data.length === 0) {
+          ToastAndroid.show('Cannot find city', ToastAndroid.SHORT);
+          this.setState({
+            inPutCity: '',
+            city: 'NA',
+            weather: 'NA',
+            currentTemp: 'NA',
+            minTemp: 'NA',
+            maxTemp: 'NA',
+          });
+          return;
+        } else {
+          this.setState({
+            location: {
+              latitude: response.data[0].lat,
+              longitude: response.data[0].lon,
+            },
+          });
+        }
+      })
+      .catch(error => {
+        ToastAndroid.show('Internet Error', ToastAndroid.SHORT);
+        console.log(error);
+      });
+    } catch (error) {
+      ToastAndroid.show('Cannot get Gcode', ToastAndroid.SHORT);
+    }   
+  }
+  handleSearch = () => {
+    Keyboard.dismiss();
+    if (this.state.inPutCity === '') {
+      ToastAndroid.show('Please input city', ToastAndroid.SHORT);
+      return;
+    } else {
+      this.getGCode();
+    }
+  }
+  /**
+   * 
+   * Get current weather by city name
+   */
+  async getWeather() {
+    const {latitude, longitude} = this.state.location;
+    const url = `https://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&appid=${APIKEY}`;
+    try {
+      await axios.get(url)
+      .then(response => {
+        this.setState({
+          city: this.state.start ? this.state.city : this.captializeFirstLetter(this.state.inPutCity.toLowerCase()),
+          weather: response.data.weather[0].main,
+          currentTemp: response.data.main.temp + ' °F',
+          minTemp: response.data.main.temp_min + ' °F',
+          maxTemp: response.data.main.temp_max + ' °F',
+          start: false,
+        });
+      }).catch(error => {
+        ToastAndroid.show('Internet Error', ToastAndroid.SHORT);
+        console.log(error);
+      });
+    } catch (error) {
+      ToastAndroid.show('Cannot get Weather', ToastAndroid.SHORT);
+    }
+  }
+  captializeFirstLetter(string) {
+    return string.charAt(0).toUpperCase() + string.slice(1);
+  }
+  /**
+   * 
+   * Request location permission
+   */
   async requestLocationPermission() {
     try {
       const granted = await PermissionsAndroid.request(
@@ -73,15 +165,21 @@ class App extends Component {
     try {
       await axios.get(url)
       .then(response => {
-        console.log(response.data[0].name);
         this.setState({
           city: response.data[0].name,
         });
+      }).catch(error => {
+        ToastAndroid.show('Internet Error', ToastAndroid.SHORT);
+        console.log(error);
       });
     } catch (error) {
-      console.log(error);
+      ToastAndroid.show('Unexpected Erro', ToastAndroid.SHORT);
     }
   }
+  /**
+   * Get current location of this device 
+   * @returns 
+   */
   getLocation() {
     const result = this.requestLocationPermission();
     if (result) {
@@ -93,7 +191,8 @@ class App extends Component {
               latitude: position.coords.latitude,
               longitude: position.coords.longitude,
             }
-          });
+          }
+          );
         },
         error => {
           console.log(error.code, error.message);
@@ -112,37 +211,25 @@ class App extends Component {
         <View style = {styles.textInputContainer}>
         <TextInput
           style={styles.textInput}
-          onChangeText={text => console.log(text)}
+          onChangeText={text => this.setState({inPutCity: text})}
+          value={this.state.inPutCity}
+          placeholder="Input City"
         />
         <TouchableOpacity
           style={styles.searchButton}
-          onPress={this.getLocation}
+          onPress={this.handleSearch}
         >
           <Text>Search</Text>
         </TouchableOpacity>
         </View>
 
         <Text style={styles.sectionTitle}>Weather</Text>
-        <View style = {styles.textContatiner}>
-          <Text style = {styles.textLeft}>City</Text>
-          <Text style = {styles.textRight}>{this.state.city}</Text>
-        </View>
-        <View style = {styles.textContatiner}>
-          <Text style = {styles.textLeft}>Current Temp</Text>
-          <Text style = {styles.textRight}>{this.state.currentTemp}</Text>
-        </View>
-        <View style = {styles.textContatiner}>
-          <Text style = {styles.textLeft}>Weather</Text>
-          <Text style = {styles.textRight}>{this.state.weather}</Text>
-        </View>
-        <View style = {styles.textContatiner}>
-          <Text style = {styles.textLeft}>Min Temp Time</Text>
-          <Text style = {styles.textRight}>{this.state.minTempOfTime}</Text>
-        </View>
-        <View style = {styles.textContatiner}>
-          <Text style = {styles.textLeft}>Max Temp Time</Text>
-          <Text style = {styles.textRight}>{this.state.maxTempOfTime}</Text>
-        </View>
+        <WeatherComponent title ="City" info = {this.state.city}/>
+        <WeatherComponent title ="Weather" info = {this.state.weather}/>
+        <WeatherComponent title ="Current Temp" info = {this.state.currentTemp}/>
+        <WeatherComponent title ="Min Temp Time" info = {this.state.minTemp}/>
+        <WeatherComponent title ="Min Temp Time" info = {this.state.maxTemp}/>
+
       </SafeAreaView>
     );
   }
@@ -181,22 +268,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     alignItems: 'center',
   },
-  textContatiner : {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  textLeft: {
-    fontSize: 24,
-    fontWeight: '600',
-    textAlign: 'left',
-    marginLeft: 30,
-  },
-  textRight: {
-    fontSize: 24,
-    fontWeight: '600',
-    textAlign: 'auto',
-    marginRight: 30,
-  },
+
   sectionContainer: {
     marginTop: 32,
     paddingHorizontal: 24,
@@ -205,14 +277,6 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: '600',
     textAlign: 'center',
-  },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
-  },
-  highlight: {
-    fontWeight: '700',
   },
 });
 

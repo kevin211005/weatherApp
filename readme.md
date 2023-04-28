@@ -1,5 +1,7 @@
 # WeatherApp 
 
+## Goal
+Developed the WeatherSearch App by using OpenWeather API
 ## Start
 
 ```bash 
@@ -14,27 +16,10 @@ yarn add axios
 yarn add react-native-geolocation-service
 ```
 
-# Add expo dependency to CameraApp 
-In app.json file
+# Add permission of using location 
+In AndroidManifest.xml add 
 ```
-{
-  "name": "CameraApp",
-  "displayName": "CameraApp", 
-  "expo": {
-    "plugins": [
-      [
-        "expo-camera",
-        {
-          "cameraPermission": "Allow $(PRODUCT_NAME) to access your camera."
-        }
-      ]
-    ]
-  }
-}
-```
-In android/gradle.properties
-```
-newArchEnabled=true
+<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
 ```
 # Run
 
@@ -46,22 +31,22 @@ npx react-native start
 
 # Work flow 
 
-1. Changed camre type to front
-2. Take two picture 
-3. Try face swap 
-4. store image 
+1. Install all dependency 
+2. Get device location by naive react-native api
+3. Get Gcode from OpenWeather API
+4. Get Weather from OpenWeather API with Gcode 
 
 # Hours 
-5 hr
+3 hr
 
 # Challenges
 
-Configuration, dependency error
+Check the result of each asynchronous API call 
 
 #Video Demo
 
 
-#Upload to Github by github cli 
+# Upload to Github by github cli 
 
 ```
 # create a remote repository from the current directory
@@ -70,3 +55,6 @@ git remote add origin https://github.com/kevin211005/my-project.git
 git branch -M main
 git push -u origin main
 ```
+
+# Reference 
+https://openweathermap.org/
