@@ -111,7 +111,7 @@ class App extends Component {
    */
   async getWeather() {
     const {latitude, longitude} = this.state.location;
-    const url = `https://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&appid=${APIKEY}`;
+    const url = `https://api.openweathermap.org/data/2.5/weather?units=imperial&lat=${latitude}&lon=${longitude}&appid=${APIKEY}`;
     try {
       await axios.get(url)
       .then(response => {
