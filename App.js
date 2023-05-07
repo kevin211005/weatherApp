@@ -116,7 +116,7 @@ class App extends Component {
       await axios.get(url)
       .then(response => {
         this.setState({
-          city: this.state.start ? this.state.city : this.captializeFirstLetter(this.state.inPutCity.toLowerCase()),
+          city: this.state.start ? this.state.city : this.capitalizeFirstLetter(this.state.inPutCity.toLowerCase()),
           weather: response.data.weather[0].main,
           currentTemp: response.data.main.temp + ' °F',
           minTemp: response.data.main.temp_min + ' °F',
@@ -131,7 +131,7 @@ class App extends Component {
       ToastAndroid.show('Cannot get Weather', ToastAndroid.SHORT);
     }
   }
-  captializeFirstLetter(string) {
+  capitalizeFirstLetter(string) {
     return string.charAt(0).toUpperCase() + string.slice(1);
   }
   /**
@@ -228,7 +228,7 @@ class App extends Component {
         <WeatherComponent title ="Weather" info = {this.state.weather}/>
         <WeatherComponent title ="Current Temp" info = {this.state.currentTemp}/>
         <WeatherComponent title ="Min Temp Time" info = {this.state.minTemp}/>
-        <WeatherComponent title ="Min Temp Time" info = {this.state.maxTemp}/>
+        <WeatherComponent title ="Max Temp Time" info = {this.state.maxTemp}/>
 
       </SafeAreaView>
     );
